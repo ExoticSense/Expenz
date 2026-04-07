@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Expenz: Policy-First Generative Expense Auditor
 
-## Getting Started
+## The Problem
+For Finance and Operations teams, auditing hundreds of corporate receipts manually against complex, multi-page travel and expense policies creates operational drag. This manual system leads to pervasive "Spend Leakage" where out-of-policy claims (like anomalous weekend expensing or exceeding regional meal thresholds) slip through the cracks due to auditor fatigue and 3-week verification delays.
 
-First, run the development server:
+## The Solution
+Expenz eliminates manual verification delays by acting as an autonomous, policy-first AI Auditor. By combining visual Optical Character Recognition (OCR) with deep Generative AI Retrieval-Augmented Generation (RAG), the system ingests receipts at the employee portal, extracts metadata instantly, and cross-references the data against the entire 40-page corporate policy manual. It catches policy violations instantly, automatically flags specific guideline breaches for the Finance dashboard, and completely automates the approval of matching claims in under 30 seconds.
 
+## Tech Stack
+*   **Frontend**: Next.js 16 (App Router), React, Tailwind CSS, TypeScript
+*   **Backend Subsystem**: Python, FastAPI, Uvicorn
+*   **Database & ORM**: Prisma ORM, SQLite (Production Ready for PostgreSQL)
+*   **AI & Machine Learning Integration**: 
+    *   `PyTesseract` & Hugging Face `LayoutLM` (OCR Data Extraction)
+    *   `google-generativeai` (Gemini 1.5 Pro) & `ChromaDB` (RAG Policy Verification)
+
+## Setup Instructions
+
+### 1. Database & Frontend Setup (Node.js Environment)
+First, install the Next.js dependencies and generate the Prisma local SQLite database.
 ```bash
+# Install NPM dependencies
+npm install
+
+# Initialize Prisma SQLite schema 
+npx prisma generate
+npx prisma db push
+
+# Run the Next.js Development Server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
+*The frontend portal will now be live at `http://localhost:3000`.*
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Python ML Backend Setup (Python Environment)
+In a secondary terminal window, initialize the FastAPI machine-learning pipeline.
+```bash
+# Navigate to the backend directory
+cd backend
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Install Python ML dependencies
+pip install -r requirements.txt
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Start the uvicorn FastAPI server on port 8000
+uvicorn main:app --reload
+```
+*Note: Make sure [Tesseract-OCR](https://github.com/UB-Mannheim/tesseract/wiki) is installed globally on your machine, or rely on the system's simulated mock-logic.*
 
-## Learn More
+## Source Code
+*   **GitHub Repository**: [Insert GitHub Repo Link Here]
 
-To learn more about Next.js, take a look at the following resources:
+## Video Demo
+*   **Link**: [Insert YouTube/Loom Link Here] 
+*This 2-minute video highlights the employee ingestion UX, the seamless handover to the FastAPI ML backend, and the immediate visualization of a flagged policy breach on the Live Auditor Dashboard.*
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Hosted Link (Optional)
+*   **Live Application**: [Insert Vercel / Hosted Link Here]

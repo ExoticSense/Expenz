@@ -12,7 +12,9 @@ export interface ExpenseClaim {
   totalAmount: number;
   currency: string;
   businessPurpose: string;
-  category: string; // e.g., 'Transport', 'Meals', 'Team Building'
+  category: string; 
   auditStatus: AuditStatus;
   items: ExpenseItem[];
+  reasoning?: string;
+  policySnippet?: string;
 }

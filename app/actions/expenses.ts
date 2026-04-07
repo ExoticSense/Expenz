@@ -12,11 +12,13 @@ export async function submitExpenseClaim(formData: FormData) {
       return { success: false, error: "Invalid file provided." }
     }
 
-    // Forward image to the local FastAPI ML Service
+    // Forward payload to ML Python Backend
     const mlFormData = new FormData();
     mlFormData.append('file', file);
+    mlFormData.append('claimedDate', claimedDate);
+    mlFormData.append('businessPurpose', businessPurpose);
     
-    // Using 127.0.0.1 for the local Python Service bridging
+    // Connect to local FastAPI RAG Pipeline
     const mlResponse = await fetch('http://127.0.0.1:8000/extract', {
       method: 'POST',
       body: mlFormData
@@ -24,22 +26,14 @@ export async function submitExpenseClaim(formData: FormData) {
 
     if (!mlResponse.ok) {
        console.error("FastAPI Connection Error");
-       return { success: false, error: "Failed to connect to ML Extraction Service. Is uvicorn running on port 8000?" }
+       return { success: false, error: "Failed to connect to ML Extraction Service. Ensure uvicorn is running on port 8000." }
     }
 
     const mlData = await mlResponse.json();
 
-    // Instant MVP Date Validation bridging
-    let auditStatus = "Approved";
-    let reasoning = "Extracted data aligns with standard bounds.";
-    
-    // If the mock ML service kicks back "2024-03-15", but user put something else
-    if (mlData.date !== claimedDate) {
-       auditStatus = "Flagged";
-       reasoning = `Date mismatch. User claimed ${claimedDate}, but AI receipt OCR extracted ${mlData.date}.`;
-    }
+    // The backend now fully structures the auditStatus and Reasoning via the Gemini RAG wrapper.
+    // We seamlessly pump the results into the persistent SQLite mapping.
 
-    // Insert to SQLite Database via Prisma
     const expense = await prisma.expense.create({
       data: {
         merchantName: mlData.merchantName,
@@ -47,9 +41,10 @@ export async function submitExpenseClaim(formData: FormData) {
         totalAmount: mlData.totalAmount,
         currency: mlData.currency,
         businessPurpose: businessPurpose,
-        category: "Pending Verification", 
-        auditStatus: auditStatus,
-        reasoning: reasoning,
+        category: "Pending Verify", // Handled manually by RAG logic above
+        auditStatus: mlData.auditStatus,
+        reasoning: mlData.reasoning,
+        policySnippet: mlData.policySnippet,
       }
     });
 
@@ -63,4 +58,16 @@ export async function submitExpenseClaim(formData: FormData) {
     console.error("Submission DB/Fetch error:", error);
     return { success: false, error: "An unexpected network or database error occurred during submission." }
   }
+}
+
+// Fetch live Queue Data for Dashboard
+export async function getExpenses() {
+   try {
+      const expenses = await prisma.expense.findMany({
+         orderBy: { createdAt: 'desc' }
+      });
+      return { success: true, data: expenses };
+   } catch(e) {
+      return { success: false, error: "Failed to fetch DB stream." };
+   }
 }

@@ -1,5 +1,7 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
+from typing import Optional
 from ocr_pipeline import process_receipt
+from rag_engine import evaluate_expense_context
 from pydantic import BaseModel
 
 app = FastAPI(title="Expenz ML Service")
@@ -10,16 +12,40 @@ class OCRResponse(BaseModel):
     totalAmount: float
     currency: str
     isMock: bool
+    auditStatus: str
+    reasoning: str
+    policySnippet: str
 
 @app.post("/extract", response_model=OCRResponse)
-async def extract_receipt_data(file: UploadFile = File(...)):
+async def extract_receipt_data(
+    file: UploadFile = File(...),
+    claimedDate: str = Form(""),
+    businessPurpose: str = Form("")
+):
     """
-    Ingests a receipt image and extracts crucial metadata using Tesseract and LayoutLM.
-    If OCR backend fails, it defaults to a mock transaction for testing.
+    Ingests a receipt image bounding box extraction, and connects directly to the RAG policy Evaluation Engine.
     """
     contents = await file.read()
-    result = process_receipt(contents)
-    return result
+    extracted = process_receipt(contents)
+    
+    # Pass Data into standard RAG rules
+    rag_evaluation = evaluate_expense_context(
+        merchant_name=extracted["merchantName"],
+        amount=extracted["totalAmount"],
+        date=extracted["date"],
+        user_claimed_date=claimedDate
+    )
+    
+    return {
+        "merchantName": extracted["merchantName"],
+        "date": extracted["date"],
+        "totalAmount": extracted["totalAmount"],
+        "currency": extracted["currency"],
+        "isMock": extracted["isMock"],
+        "auditStatus": rag_evaluation["status"],
+        "reasoning": rag_evaluation["reasoning"],
+        "policySnippet": rag_evaluation["policySnippet"]
+    }
 
 if __name__ == "__main__":
     import uvicorn
