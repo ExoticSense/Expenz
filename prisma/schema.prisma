@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Expense {
+  id              String   @id @default(cuid())
+  merchantName    String?
+  date            DateTime?
+  totalAmount     Float?
+  currency        String?
+  businessPurpose String?
+  category        String?
+  auditStatus     String   @default("Pending") // 'Approved' | 'Flagged' | 'Rejected' | 'Pending'
+  reasoning       String?
+  policySnippet   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
